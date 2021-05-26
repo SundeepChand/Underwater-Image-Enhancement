@@ -1,0 +1,11 @@
+# Unwanted image directories
+image/haze_input
+image/haze_output
+
+# Pycharm files
+venv
+.idea
+
+# Random files
+dehaze.py
+invert_color.py
