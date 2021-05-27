@@ -3,6 +3,7 @@ import cv2
 
 
 def resize(img, perc=0.5):
+    """Utility function to resize the image"""
     width = int(img.shape[1] * perc)
     height = int(img.shape[0] * perc)
     resized = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
@@ -10,6 +11,7 @@ def resize(img, perc=0.5):
 
 
 def dark_channel(img, sz=15):
+    """Calculates the dark channel in step 1"""
     b, g, r = cv2.split(img)
     dc = r - cv2.max(b, g)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (sz, sz))
@@ -18,6 +20,7 @@ def dark_channel(img, sz=15):
 
 
 def airlight(img, dc):
+    """Calculates the air-light in step 4"""
     [h, w] = img.shape[:2]
     imgsz = h * w
     imgvec = img.reshape(imgsz, 3)
@@ -28,11 +31,13 @@ def airlight(img, dc):
 
 
 def transmission_estimate(dc):
+    """Calculates the transmission map as mentioned in step 2"""
     te = dc + (1 - np.max(dc))
     return te
 
 
 def guided_filter(img, p, r, eps):
+    """Helper function to refine the transmission"""
     mean_I = cv2.boxFilter(img, cv2.CV_64F, (r, r))
     mean_p = cv2.boxFilter(p, cv2.CV_64F, (r, r))
     mean_Ip = cv2.boxFilter(img * p, cv2.CV_64F, (r, r))
@@ -52,6 +57,7 @@ def guided_filter(img, p, r, eps):
 
 
 def transmission_refine(img, et):
+    """Refines the transmission map as mentioned in step 3"""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = np.float64(gray) / 255
     r = 60
@@ -61,6 +67,7 @@ def transmission_refine(img, et):
 
 
 def recover(img, t, A):
+    """Finally recovers the image using the image, the transmission map and air-light"""
     res = np.empty(img.shape, img.dtype)
     for index in range(0, 3):
         res[:, :, index] = (img[:, :, index] - A[index]) / t + A[index]
@@ -69,6 +76,7 @@ def recover(img, t, A):
 
 
 def normalize_image(img):
+    """Utility function to normalize the intensities of the pixels in the image"""
     img = img - img.min()
     img = img / img.max() * 255
     img = np.uint8(img)
